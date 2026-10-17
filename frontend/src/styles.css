@@ -52,8 +52,9 @@ select { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border
 .chip { font: inherit; font-size: 13px; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 12px; cursor: pointer; color: var(--navy); }
 .chip.is-on { background: var(--navy); color: #fff; border-color: var(--navy); } .chip-n { opacity: 0.7; margin-left: 4px; }
 .roster { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.roster-row { display: grid; grid-template-columns: 1fr 220px 120px 150px; gap: 16px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
+.roster-row { display: grid; grid-template-columns: minmax(0, 1fr) 220px 120px 150px; gap: 16px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
 .roster-row:last-child { border-bottom: none; } .roster-row:hover { background: #f3f6f8; }
+.roster-main { min-width: 0; }
 .roster-id { font-weight: 600; font-size: 16px; display: flex; gap: 10px; align-items: center; }
 .roster-sum { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
 .roster-plan, .roster-date { color: var(--navy-2); font-size: 14px; } .roster-date { color: var(--muted); }
@@ -109,5 +110,5 @@ th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--lin
 th { font-size: 12px; color: var(--muted); font-weight: 600; background: #fafbfc; }
 .row-model td { font-weight: 600; } td.actions { display: flex; gap: 6px; justify-content: flex-end; }
 .limits li { margin-bottom: 6px; } .log { font-size: 13px; padding-left: 18px; }
-@media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .roster-row { grid-template-columns: 1fr 140px; } .roster-plan, .roster-date { display: none; } }
+@media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .roster-row { grid-template-columns: minmax(0, 1fr) 140px; } .roster-plan, .roster-date { display: none; } }
 @media (max-width: 760px) { .sidebar { display: none; } .meta { grid-template-columns: 1fr; } .page-head { flex-direction: column; } .search { width: 100%; } }
