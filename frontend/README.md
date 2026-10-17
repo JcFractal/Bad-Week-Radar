@@ -45,5 +45,37 @@ until **Reveal following days** is selected, and changing `D` hides them again (
 ## Static hosting
 
 `npm run build` creates `dist/` with relative asset paths and hash routing, so it works from any static host or sub-path
-with no rewrite rules. Examples: Netlify / Cloudflare Pages (base directory `frontend`, build `npm ci && npm run build`,
-publish `dist`), GitHub Pages (publish `frontend/dist`), or any S3-style bucket.
+with no rewrite rules, environment variables or backend. The build contains only the illustrative examples and the
+committed aggregate results; imported files never leave the browser.
+
+### GitHub Pages (current deployment)
+
+The built `dist/` is published on the `gh-pages` branch (build output only; nothing is merged into `main`). Once Pages is
+enabled (Settings → Pages → Source: Deploy from a branch → `gh-pages` / `/ (root)`), the app is served at
+https://jcfractal.github.io/Bad-Week-Radar/.
+
+To republish after frontend changes:
+
+```bash
+cd frontend && npm ci && npm run build
+rm -rf /tmp/bwr-pages && mkdir /tmp/bwr-pages && cp -r dist/. /tmp/bwr-pages/ && touch /tmp/bwr-pages/.nojekyll
+cd /tmp/bwr-pages && git init -q -b gh-pages && git add -A && git commit -qm "Deploy frontend"
+git push -f https://github.com/JcFractal/Bad-Week-Radar.git gh-pages
+```
+
+Before publishing, check that `dist/` holds only `index.html`, `favicon.svg` and `assets/`, and that it has no patient
+IDs from the challenge data (`grep -rE 'P0[0-9]{4}' dist` should print nothing).
+
+Other hosts work too: Netlify / Cloudflare Pages (base directory `frontend`, build `npm ci && npm run build`,
+publish `dist`), or any S3-style bucket.
+
+## Archie source (JcFractal/Bad-Week-Radar-UI)
+
+Archie's generated source was reviewed at commit `f86b73f`, and **no code was reused**. The interface here matches the
+screenshots' light navy/teal layout and was written independently. Reasons the source wasn't merged in:
+
+- Its patient status map (`src/presentation/status-map.ts`) includes `Watch` and `Stable`. The analysis contract
+  only has `alert`, `no_alert` and `insufficient_data`, and `no_alert` must not be shown as stable or healthy.
+- It is built around Archie's generated SDK, login screens and in-memory fixtures (React 19, Tailwind 4, shadcn/ui,
+  Bun). Wiring the contract import, dated replay and reveal rules into it would take longer than the time left before
+  the deadline and would add auth screens this static app doesn't need.
