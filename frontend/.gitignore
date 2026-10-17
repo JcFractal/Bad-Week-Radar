@@ -1,0 +1,12 @@
+node_modules
+dist
+*.local
+.vite
+coverage
+# Patient-level exports are imported in the browser at runtime and must never be committed.
+*.json
+!package.json
+!package-lock.json
+!tsconfig*.json
+*.csv
+*.zip
