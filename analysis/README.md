@@ -25,6 +25,7 @@ python analysis/train_eval.py      # ~1.5 min: features, patient split, training
 python analysis/export.py          # demo export of 5 held-out test patients -> ~/bwr_outputs/demo_export.json
 python analysis/export.py --patient-ids P00044 P00065 --as-of 2024-03-15 --no-days --out ~/bwr_outputs/x.json
 python -m pytest analysis/tests -q # leakage, separation and privacy checks
+python analysis/fatigue_experiment.py  # secondary, real NON-oncology data -> analysis/results/fatigue_next_day_bad_day.json
 ```
 
 ## Method (summary)

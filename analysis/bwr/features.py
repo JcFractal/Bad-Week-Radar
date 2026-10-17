@@ -36,16 +36,16 @@ COVERAGE_WINDOW = "7D"
 Z_CLIP = 5.0
 
 
-def feature_columns():
+def feature_columns(signals=SIGNALS, wear=WEAR):
     cols = []
-    for s in SIGNALS:
+    for s in signals:
         cols += [f"{s}_today", f"{s}_dev_z", f"{s}_recent_dev_z", f"{s}_missing_today"]
-    cols += [f"{WEAR}_today", f"{WEAR}_dev_z", "wearable_days_last_7", "baseline_days"]
+    cols += [f"{wear}_today", f"{wear}_dev_z", "wearable_days_last_7", "baseline_days"]
     return cols
 
 
-def signal_of_feature(col):
-    for s in SIGNALS + [WEAR]:
+def signal_of_feature(col, signals=SIGNALS, wear=WEAR):
+    for s in signals + [wear]:
         if col.startswith(s + "_"):
             return s
     return "coverage"
@@ -58,36 +58,39 @@ def _z(value, mean, std):
     return z.clip(-Z_CLIP, Z_CLIP)
 
 
-def _patient_features(g):
+def _patient_features(g, signals, wear, presence, window, min_obs):
     g = g.set_index("date")
     out = pd.DataFrame(index=g.index)
-    for s in SIGNALS + [WEAR]:
+    for s in signals + [wear]:
         x = g[s].astype(float)
-        base = x.rolling(BASELINE_WINDOW, closed="left", min_periods=MIN_BASELINE_OBS)
+        base = x.rolling(window, closed="left", min_periods=min_obs)
         mean, std = base.mean(), base.std()
         out[f"{s}_today"] = x
         out[f"{s}_dev_z"] = _z(x, mean, std)
         out[f"_{s}_baseline"] = mean
-        if s != WEAR:
+        if s != wear:
             recent = x.rolling(RECENT_WINDOW, min_periods=1).mean()
             out[f"{s}_recent_dev_z"] = _z(recent, mean, std)
             out[f"_{s}_recent"] = recent
             out[f"{s}_missing_today"] = x.isna().astype(float)
-    worn = g["steps"].notna().astype(float)
+    worn = g[presence].notna().astype(float)
     out["wearable_days_last_7"] = worn.rolling(COVERAGE_WINDOW, min_periods=1).sum()
-    out["baseline_days"] = g["steps"].rolling(BASELINE_WINDOW, closed="left", min_periods=1).count().fillna(0)
+    out["baseline_days"] = g[presence].rolling(window, closed="left", min_periods=1).count().fillna(0)
     return out.reset_index()
 
 
-def build_features(daily):
-    """daily: one row per patient-day with patient_id, date and wearable columns.
-    Returns one row per input row with feature columns (+ private `_`-prefixed explanation columns)."""
-    df = daily[["patient_id", "date"] + SIGNALS + [WEAR]].copy()
+def build_features(daily, signals=SIGNALS, wear=WEAR, presence="steps", window=BASELINE_WINDOW,
+                   min_obs=MIN_BASELINE_OBS):
+    """daily: one row per patient-day with patient_id, date and wearable columns (dates may have gaps;
+    all windows are calendar-based). Returns one row per input row with feature columns
+    (+ private `_`-prefixed explanation columns)."""
+    df = daily[["patient_id", "date"] + signals + [wear]].copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values(["patient_id", "date"])
     if df.duplicated(["patient_id", "date"]).any():
         raise ValueError("duplicate patient_id/date rows")
-    parts = [_patient_features(g).assign(patient_id=pid) for pid, g in df.groupby("patient_id", sort=False)]
+    parts = [_patient_features(g, signals, wear, presence, window, min_obs).assign(patient_id=pid)
+             for pid, g in df.groupby("patient_id", sort=False)]
     feats = pd.concat(parts, ignore_index=True)
-    feats["sufficient_data"] = (feats["baseline_days"] >= MIN_BASELINE_OBS) & (feats["wearable_days_last_7"] >= 1)
+    feats["sufficient_data"] = (feats["baseline_days"] >= min_obs) & (feats["wearable_days_last_7"] >= 1)
     return feats

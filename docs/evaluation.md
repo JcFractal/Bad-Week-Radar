@@ -51,3 +51,35 @@ The 95% CIs come from a patient-level bootstrap with 200 resamples.
   on purpose. It is not evidence about real patients.
 - No probability calibration was done. The 0.21 threshold is an operating point chosen on validation, not a risk
   level.
+
+---
+
+# Secondary experiment: next-day bad day (real, **non-oncology** data)
+
+Source: `fatigue_study_daily.csv` (Rao et al. 2023). The participants are US adults with lupus and/or Sjögren's
+syndrome, plus controls. **They are not cancer patients.** Results come from
+`python analysis/fatigue_experiment.py`; source JSON is `analysis/results/fatigue_next_day_bad_day.json`.
+
+**Setup**
+- **Outcome:** next calendar day's `bad_day == 1`.
+- **Inputs:** Fitbit features only, using the same feature recipe with a 14-day prior baseline (minimum 5 days).
+- **Never used:** any survey answer. That includes `weekly_fatigue_score_0_to_52`, which is copied onto all 7
+  days of its week and would leak.
+- **Split:** person-level. The threshold is max-F1 on validation people (0.057).
+
+**Test results (45 held-out people, 28 with eligible Fitbit days)**
+
+| Population | Model | n | Prevalence | AUROC (95% CI) | PR-AUC | Precision | Recall | Alerts / 100 |
+|---|---|---|---|---|---|---|---|---|
+| All eligible | Wearable LR | 578 | 0.114 | 0.603 (0.467–0.742) | 0.162 | 0.147 | 0.682 | 52.9 |
+| All eligible | Constant | 578 | 0.114 | 0.500 | 0.114 | 0.114 | 1.000 | 100 |
+| Shared with persistence | Wearable LR | 530 | 0.121 | 0.594 (0.462–0.723) | 0.167 | 0.153 | 0.672 | 53.2 |
+| Shared with persistence | Persistence (today bad)* | 530 | 0.121 | 0.608 | 0.179 | 0.308 | 0.313 | 12.3 |
+| New onset | Wearable LR | 366 | 0.036 | 0.628 (0.436–0.786) | 0.062 | 0.049 | 0.692 | 50.6 |
+
+\* Today's rating is reported the next morning, slightly after the prediction time, so persistence is optimistic.
+
+**Reading:** performance is **weak and not statistically distinguishable from chance**: every AUROC CI includes
+0.5. The test set is small (28 people), and the validation-chosen threshold alerts on about half of all days.
+This experiment **does not support** a claim that wrist data alone predicts tomorrow's bad day in this real
+cohort. Supporting that would take more people and a better-specified signal.

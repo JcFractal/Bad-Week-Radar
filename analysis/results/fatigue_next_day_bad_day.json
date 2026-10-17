@@ -1,0 +1,401 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-17T18:34:22+00:00",
+  "dataset": {
+    "name": "fatigue_study_daily.csv (Rao et al. 2023; Evidation/Novartis/Roche, Zenodo 8018238)",
+    "synthetic": false,
+    "oncology": false,
+    "population": "US adults with lupus and/or Sjogren's syndrome and controls without autoimmune disease; NOT cancer patients",
+    "n_people": 296,
+    "n_patient_days": 9317,
+    "date_range": [
+      "2020-08-14",
+      "2020-10-08"
+    ]
+  },
+  "task": {
+    "outcome": "next calendar day's bad_day == 1 (day rated 'bad')",
+    "horizon_days": 1,
+    "prediction_time": "end of the current day (wearable data only)",
+    "unknown_outcomes": "days without a next-calendar-day rating are excluded, not negative",
+    "eligibility": "next-day rating present AND >= 5 Fitbit days in the prior 14 days AND >= 1 in the last 7",
+    "excluded_inputs": [
+      "day_rating",
+      "bad_day",
+      "tired_0_to_4",
+      "pain_0_to_4",
+      "low_mood_0_to_4",
+      "trouble_with_usual_activities_0_to_4",
+      "needed_daytime_sleep_0_to_2",
+      "weekly_fatigue_score_0_to_52",
+      "health_group",
+      "age",
+      "sex",
+      "study_week"
+    ],
+    "leakage_note": "weekly_fatigue_score_0_to_52 is copied onto all 7 days of its week, so it is never used; no survey answer is used as a model input",
+    "persistence_caveat": "today's rating is reported the next morning, i.e. slightly after the prediction time; the persistence baseline is therefore optimistic",
+    "new_onset_definition": "eligible days with >=1 rating in days t-6..t and none of them bad"
+  },
+  "split": {
+    "unit": "person",
+    "method": "sha256('bwr-split-v1:'+person_id) mod 100: <60 train, <80 val, else test",
+    "summary": {
+      "test": {
+        "n_patients": 45,
+        "n_patients_with_fitbit": 30,
+        "n_patient_days": 1418,
+        "n_labeled_next_day": 1062,
+        "n_eligible": 578,
+        "eligible_prevalence": 0.1142
+      },
+      "train": {
+        "n_patients": 181,
+        "n_patients_with_fitbit": 131,
+        "n_patient_days": 5724,
+        "n_labeled_next_day": 4462,
+        "n_eligible": 2793,
+        "eligible_prevalence": 0.0874
+      },
+      "val": {
+        "n_patients": 70,
+        "n_patients_with_fitbit": 46,
+        "n_patient_days": 2175,
+        "n_labeled_next_day": 1704,
+        "n_eligible": 950,
+        "eligible_prevalence": 0.06
+      }
+    }
+  },
+  "model": {
+    "type": "logistic regression (median imputation + standardization, fit on training people only)",
+    "baseline_window": "14D",
+    "threshold": 0.0569,
+    "threshold_rule": "max F1 on validation people",
+    "score_type": "uncalibrated_logistic_score",
+    "top_standardized_coefficients": [
+      {
+        "feature": "avg_heart_rate_awake_missing_today",
+        "coef": 0.9712
+      },
+      {
+        "feature": "sleep_minutes_today",
+        "coef": 0.5724
+      },
+      {
+        "feature": "time_in_bed_minutes_dev_z",
+        "coef": -0.48
+      },
+      {
+        "feature": "minutes_brisk_activity_today",
+        "coef": -0.4491
+      },
+      {
+        "feature": "sleep_efficiency_pct_today",
+        "coef": -0.4335
+      },
+      {
+        "feature": "avg_heart_rate_asleep_today",
+        "coef": -0.4317
+      },
+      {
+        "feature": "minutes_light_activity_dev_z",
+        "coef": -0.3853
+      },
+      {
+        "feature": "steps_dev_z",
+        "coef": 0.3167
+      },
+      {
+        "feature": "minutes_brisk_activity_missing_today",
+        "coef": 0.2816
+      },
+      {
+        "feature": "resting_heart_rate_today",
+        "coef": 0.2664
+      }
+    ]
+  },
+  "results": {
+    "val": {
+      "all_eligible": {
+        "n_patients": 46,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 950,
+            "n_positive": 57,
+            "prevalence": 0.06,
+            "auroc": 0.5639,
+            "pr_auc": 0.0676,
+            "precision": 0.0784,
+            "recall": 0.6667,
+            "alerts_per_100_patient_days": 51.05,
+            "n_alerts": 485,
+            "true_positive_alerts": 38
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 950,
+            "n_positive": 57,
+            "prevalence": 0.06,
+            "auroc": 0.5,
+            "pr_auc": 0.06,
+            "precision": 0.06,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 950,
+            "true_positive_alerts": 57
+          },
+          "persistence_today_bad_day": {
+            "n_patient_days": 875,
+            "n_positive": 50,
+            "prevalence": 0.0571,
+            "auroc": 0.6045,
+            "pr_auc": 0.1037,
+            "precision": 0.2364,
+            "recall": 0.26,
+            "alerts_per_100_patient_days": 6.29,
+            "n_alerts": 55,
+            "true_positive_alerts": 13
+          }
+        }
+      },
+      "shared_with_persistence": {
+        "n_patients": 45,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 875,
+            "n_positive": 50,
+            "prevalence": 0.0571,
+            "auroc": 0.5747,
+            "pr_auc": 0.0665,
+            "precision": 0.0762,
+            "recall": 0.68,
+            "alerts_per_100_patient_days": 50.97,
+            "n_alerts": 446,
+            "true_positive_alerts": 34
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 875,
+            "n_positive": 50,
+            "prevalence": 0.0571,
+            "auroc": 0.5,
+            "pr_auc": 0.0571,
+            "precision": 0.0571,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 875,
+            "true_positive_alerts": 50
+          },
+          "persistence_today_bad_day": {
+            "n_patient_days": 875,
+            "n_positive": 50,
+            "prevalence": 0.0571,
+            "auroc": 0.6045,
+            "pr_auc": 0.1037,
+            "precision": 0.2364,
+            "recall": 0.26,
+            "alerts_per_100_patient_days": 6.29,
+            "n_alerts": 55,
+            "true_positive_alerts": 13
+          }
+        }
+      },
+      "new_onset": {
+        "n_patients": 44,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 724,
+            "n_positive": 22,
+            "prevalence": 0.0304,
+            "auroc": 0.5067,
+            "pr_auc": 0.0321,
+            "precision": 0.0323,
+            "recall": 0.5455,
+            "alerts_per_100_patient_days": 51.38,
+            "n_alerts": 372,
+            "true_positive_alerts": 12
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 724,
+            "n_positive": 22,
+            "prevalence": 0.0304,
+            "auroc": 0.5,
+            "pr_auc": 0.0304,
+            "precision": 0.0304,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 724,
+            "true_positive_alerts": 22
+          },
+          "persistence_today_bad_day": {
+            "n_patient_days": 665,
+            "n_positive": 21,
+            "prevalence": 0.0316,
+            "auroc": 0.5,
+            "pr_auc": 0.0316,
+            "precision": null,
+            "recall": 0.0,
+            "alerts_per_100_patient_days": 0.0,
+            "n_alerts": 0,
+            "true_positive_alerts": 0
+          }
+        }
+      }
+    },
+    "test": {
+      "all_eligible": {
+        "n_patients": 28,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 578,
+            "n_positive": 66,
+            "prevalence": 0.1142,
+            "auroc": 0.6027,
+            "pr_auc": 0.1615,
+            "precision": 0.1471,
+            "recall": 0.6818,
+            "alerts_per_100_patient_days": 52.94,
+            "n_alerts": 306,
+            "true_positive_alerts": 45,
+            "auroc_95ci": [
+              0.4672,
+              0.7415
+            ],
+            "pr_auc_95ci": [
+              0.0736,
+              0.2862
+            ],
+            "n_boot": 200,
+            "resampling_unit": "patient"
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 578,
+            "n_positive": 66,
+            "prevalence": 0.1142,
+            "auroc": 0.5,
+            "pr_auc": 0.1142,
+            "precision": 0.1142,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 578,
+            "true_positive_alerts": 66
+          },
+          "persistence_today_bad_day": {
+            "n_patient_days": 530,
+            "n_positive": 64,
+            "prevalence": 0.1208,
+            "auroc": 0.608,
+            "pr_auc": 0.1792,
+            "precision": 0.3077,
+            "recall": 0.3125,
+            "alerts_per_100_patient_days": 12.26,
+            "n_alerts": 65,
+            "true_positive_alerts": 20
+          }
+        }
+      },
+      "shared_with_persistence": {
+        "n_patients": 27,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 530,
+            "n_positive": 64,
+            "prevalence": 0.1208,
+            "auroc": 0.5943,
+            "pr_auc": 0.1669,
+            "precision": 0.1525,
+            "recall": 0.6719,
+            "alerts_per_100_patient_days": 53.21,
+            "n_alerts": 282,
+            "true_positive_alerts": 43,
+            "auroc_95ci": [
+              0.4615,
+              0.723
+            ],
+            "pr_auc_95ci": [
+              0.0747,
+              0.2836
+            ],
+            "n_boot": 200,
+            "resampling_unit": "patient"
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 530,
+            "n_positive": 64,
+            "prevalence": 0.1208,
+            "auroc": 0.5,
+            "pr_auc": 0.1208,
+            "precision": 0.1208,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 530,
+            "true_positive_alerts": 64
+          },
+          "persistence_today_bad_day": {
+            "n_patient_days": 530,
+            "n_positive": 64,
+            "prevalence": 0.1208,
+            "auroc": 0.608,
+            "pr_auc": 0.1792,
+            "precision": 0.3077,
+            "recall": 0.3125,
+            "alerts_per_100_patient_days": 12.26,
+            "n_alerts": 65,
+            "true_positive_alerts": 20
+          }
+        }
+      },
+      "new_onset": {
+        "n_patients": 27,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 366,
+            "n_positive": 13,
+            "prevalence": 0.0355,
+            "auroc": 0.628,
+            "pr_auc": 0.0624,
+            "precision": 0.0486,
+            "recall": 0.6923,
+            "alerts_per_100_patient_days": 50.55,
+            "n_alerts": 185,
+            "true_positive_alerts": 9,
+            "auroc_95ci": [
+              0.4355,
+              0.7856
+            ],
+            "pr_auc_95ci": [
+              0.0248,
+              0.1887
+            ],
+            "n_boot": 200,
+            "resampling_unit": "patient"
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 366,
+            "n_positive": 13,
+            "prevalence": 0.0355,
+            "auroc": 0.5,
+            "pr_auc": 0.0355,
+            "precision": 0.0355,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 366,
+            "true_positive_alerts": 13
+          },
+          "persistence_today_bad_day": {
+            "n_patient_days": 332,
+            "n_positive": 13,
+            "prevalence": 0.0392,
+            "auroc": 0.5,
+            "pr_auc": 0.0392,
+            "precision": null,
+            "recall": 0.0,
+            "alerts_per_100_patient_days": 0.0,
+            "n_alerts": 0,
+            "true_positive_alerts": 0
+          }
+        }
+      }
+    }
+  }
+}
