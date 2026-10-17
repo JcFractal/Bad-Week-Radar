@@ -1,0 +1,13 @@
+# Restricted hackathon data and patient-level outputs must never be committed (public repo).
+*.csv
+*.zip
+*.parquet
+*.joblib
+*.pkl
+*.json
+!results/*.json
+data/
+outputs/
+__pycache__/
+*.pyc
+.pytest_cache/

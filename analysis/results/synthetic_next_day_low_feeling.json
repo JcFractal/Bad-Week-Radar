@@ -1,0 +1,416 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-17T18:32:46+00:00",
+  "model_version": "bwr-lr-wearable-v1",
+  "dataset": {
+    "name": "synthetic_daily.csv (Crane Lab synthetic oncology cohort)",
+    "synthetic": true,
+    "disclaimer": "Made-up data with deliberately designed patterns. These results are NOT clinical validation.",
+    "n_patients": 3000,
+    "n_patient_days": 465466,
+    "date_range": [
+      "2024-01-08",
+      "2026-08-28"
+    ],
+    "feeling_response_rate": 0.4554,
+    "wearable_missing_rate_steps": 0.1217
+  },
+  "task": {
+    "outcome": "next calendar day's daily_feeling_1_to_5 <= 2",
+    "prediction_time": "end of the current day",
+    "horizon_days": 1,
+    "unknown_outcomes": "patient-days whose next calendar day has no feeling response are excluded (unknown), not negative",
+    "eligibility": "next-day response present AND >= 7 wearable days in the prior 28 days AND >= 1 wearable day in the last 7",
+    "new_onset_definition": "eligible days with >=1 feeling response in days t-6..t and none of them <= 2"
+  },
+  "split": {
+    "unit": "patient",
+    "method": "sha256('bwr-split-v1:'+patient_id) mod 100: <60 train, <80 val, else test",
+    "summary": {
+      "train": {
+        "n_patients": 1815,
+        "n_patient_days": 281519,
+        "n_labeled_next_day": 127058,
+        "n_excluded_insufficient_wearable_history": 7555,
+        "n_eligible": 119503,
+        "eligible_prevalence": 0.0868
+      },
+      "val": {
+        "n_patients": 575,
+        "n_patient_days": 90322,
+        "n_labeled_next_day": 40882,
+        "n_excluded_insufficient_wearable_history": 2368,
+        "n_eligible": 38514,
+        "eligible_prevalence": 0.0851
+      },
+      "test": {
+        "n_patients": 610,
+        "n_patient_days": 93625,
+        "n_labeled_next_day": 42366,
+        "n_excluded_insufficient_wearable_history": 2464,
+        "n_eligible": 39902,
+        "eligible_prevalence": 0.0829
+      }
+    }
+  },
+  "model": {
+    "type": "logistic regression (median imputation + standardization, fit on training patients only)",
+    "inputs": "wearable signals only: today's values, deviation from personal prior-28-day baseline, 3-day trend vs baseline, missingness indicators, wear time, coverage",
+    "excluded_inputs": [
+      "daily_feeling_1_to_5",
+      "weekly_fatigue_0_to_4",
+      "weekly_nausea_0_to_4",
+      "weekly_pain_0_to_4",
+      "weekly_appetite_loss_0_to_4",
+      "weekly_diarrhea_0_to_4",
+      "weekly_trouble_sleeping_0_to_4",
+      "weekly_anxiety_0_to_4",
+      "weekly_sadness_0_to_4",
+      "coaching_call",
+      "events",
+      "diary_note"
+    ],
+    "n_features": 36,
+    "score_type": "uncalibrated_logistic_score",
+    "threshold": 0.2078,
+    "threshold_rule": "max F1 on validation patients",
+    "top_standardized_coefficients": [
+      {
+        "feature": "times_woke_up_today",
+        "coef": 1.3931
+      },
+      {
+        "feature": "times_woke_up_dev_z",
+        "coef": -1.2868
+      },
+      {
+        "feature": "sleep_efficiency_pct_recent_dev_z",
+        "coef": -0.2736
+      },
+      {
+        "feature": "resting_heart_rate_recent_dev_z",
+        "coef": 0.226
+      },
+      {
+        "feature": "resting_heart_rate_dev_z",
+        "coef": 0.219
+      },
+      {
+        "feature": "minutes_watch_worn_dev_z",
+        "coef": 0.2055
+      },
+      {
+        "feature": "minutes_watch_worn_today",
+        "coef": -0.1827
+      },
+      {
+        "feature": "steps_recent_dev_z",
+        "coef": -0.1608
+      },
+      {
+        "feature": "steps_today",
+        "coef": -0.1214
+      },
+      {
+        "feature": "times_woke_up_recent_dev_z",
+        "coef": 0.1145
+      },
+      {
+        "feature": "hrv_rmssd_ms_recent_dev_z",
+        "coef": -0.1101
+      },
+      {
+        "feature": "skin_temp_change_c_today",
+        "coef": 0.1006
+      }
+    ]
+  },
+  "results": {
+    "val": {
+      "all_eligible": {
+        "n_patients": 575,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 38514,
+            "n_positive": 3276,
+            "prevalence": 0.0851,
+            "auroc": 0.7707,
+            "pr_auc": 0.3866,
+            "precision": 0.3969,
+            "recall": 0.3871,
+            "alerts_per_100_patient_days": 8.3,
+            "n_alerts": 3195,
+            "true_positive_alerts": 1268
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 38514,
+            "n_positive": 3276,
+            "prevalence": 0.0851,
+            "auroc": 0.5,
+            "pr_auc": 0.0851,
+            "precision": 0.0851,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 38514,
+            "true_positive_alerts": 3276
+          },
+          "persistence_today_feeling": {
+            "n_patient_days": 18950,
+            "n_positive": 1482,
+            "prevalence": 0.0782,
+            "auroc": 0.8344,
+            "pr_auc": 0.3733,
+            "precision": 0.4698,
+            "recall": 0.4615,
+            "alerts_per_100_patient_days": 7.68,
+            "n_alerts": 1456,
+            "true_positive_alerts": 684,
+            "population_note": "evaluated only on rows where today's feeling was reported"
+          }
+        }
+      },
+      "shared_with_persistence": {
+        "n_patients": 575,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 18950,
+            "n_positive": 1482,
+            "prevalence": 0.0782,
+            "auroc": 0.7523,
+            "pr_auc": 0.3255,
+            "precision": 0.3478,
+            "recall": 0.3401,
+            "alerts_per_100_patient_days": 7.65,
+            "n_alerts": 1449,
+            "true_positive_alerts": 504
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 18950,
+            "n_positive": 1482,
+            "prevalence": 0.0782,
+            "auroc": 0.5,
+            "pr_auc": 0.0782,
+            "precision": 0.0782,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 18950,
+            "true_positive_alerts": 1482
+          },
+          "persistence_today_feeling": {
+            "n_patient_days": 18950,
+            "n_positive": 1482,
+            "prevalence": 0.0782,
+            "auroc": 0.8344,
+            "pr_auc": 0.3733,
+            "precision": 0.4698,
+            "recall": 0.4615,
+            "alerts_per_100_patient_days": 7.68,
+            "n_alerts": 1456,
+            "true_positive_alerts": 684,
+            "population_note": "same rows as the other models in this population"
+          }
+        }
+      },
+      "new_onset": {
+        "n_patients": 575,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 30913,
+            "n_positive": 1361,
+            "prevalence": 0.044,
+            "auroc": 0.6984,
+            "pr_auc": 0.1635,
+            "precision": 0.2028,
+            "recall": 0.2116,
+            "alerts_per_100_patient_days": 4.59,
+            "n_alerts": 1420,
+            "true_positive_alerts": 288
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 30913,
+            "n_positive": 1361,
+            "prevalence": 0.044,
+            "auroc": 0.5,
+            "pr_auc": 0.044,
+            "precision": 0.044,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 30913,
+            "true_positive_alerts": 1361
+          },
+          "persistence_today_feeling": {
+            "n_patient_days": 15188,
+            "n_positive": 546,
+            "prevalence": 0.0359,
+            "auroc": 0.7378,
+            "pr_auc": 0.0771,
+            "precision": null,
+            "recall": 0.0,
+            "alerts_per_100_patient_days": 0.0,
+            "n_alerts": 0,
+            "true_positive_alerts": 0,
+            "population_note": "evaluated only on rows where today's feeling was reported"
+          }
+        }
+      }
+    },
+    "test": {
+      "all_eligible": {
+        "n_patients": 610,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 39902,
+            "n_positive": 3307,
+            "prevalence": 0.0829,
+            "auroc": 0.7717,
+            "pr_auc": 0.3737,
+            "precision": 0.3814,
+            "recall": 0.3762,
+            "alerts_per_100_patient_days": 8.18,
+            "n_alerts": 3262,
+            "true_positive_alerts": 1244,
+            "auroc_95ci": [
+              0.7588,
+              0.7855
+            ],
+            "pr_auc_95ci": [
+              0.3471,
+              0.3988
+            ],
+            "n_boot": 200,
+            "resampling_unit": "patient"
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 39902,
+            "n_positive": 3307,
+            "prevalence": 0.0829,
+            "auroc": 0.5,
+            "pr_auc": 0.0829,
+            "precision": 0.0829,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 39902,
+            "true_positive_alerts": 3307
+          },
+          "persistence_today_feeling": {
+            "n_patient_days": 19393,
+            "n_positive": 1458,
+            "prevalence": 0.0752,
+            "auroc": 0.8387,
+            "pr_auc": 0.3562,
+            "precision": 0.4535,
+            "recall": 0.4582,
+            "alerts_per_100_patient_days": 7.6,
+            "n_alerts": 1473,
+            "true_positive_alerts": 668,
+            "population_note": "evaluated only on rows where today's feeling was reported"
+          }
+        }
+      },
+      "shared_with_persistence": {
+        "n_patients": 610,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 19393,
+            "n_positive": 1458,
+            "prevalence": 0.0752,
+            "auroc": 0.752,
+            "pr_auc": 0.3109,
+            "precision": 0.3273,
+            "recall": 0.3244,
+            "alerts_per_100_patient_days": 7.45,
+            "n_alerts": 1445,
+            "true_positive_alerts": 473,
+            "auroc_95ci": [
+              0.7328,
+              0.7706
+            ],
+            "pr_auc_95ci": [
+              0.2792,
+              0.3432
+            ],
+            "n_boot": 200,
+            "resampling_unit": "patient"
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 19393,
+            "n_positive": 1458,
+            "prevalence": 0.0752,
+            "auroc": 0.5,
+            "pr_auc": 0.0752,
+            "precision": 0.0752,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 19393,
+            "true_positive_alerts": 1458
+          },
+          "persistence_today_feeling": {
+            "n_patient_days": 19393,
+            "n_positive": 1458,
+            "prevalence": 0.0752,
+            "auroc": 0.8387,
+            "pr_auc": 0.3562,
+            "precision": 0.4535,
+            "recall": 0.4582,
+            "alerts_per_100_patient_days": 7.6,
+            "n_alerts": 1473,
+            "true_positive_alerts": 668,
+            "population_note": "same rows as the other models in this population"
+          }
+        }
+      },
+      "new_onset": {
+        "n_patients": 610,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 32262,
+            "n_positive": 1341,
+            "prevalence": 0.0416,
+            "auroc": 0.6945,
+            "pr_auc": 0.1527,
+            "precision": 0.1892,
+            "recall": 0.2058,
+            "alerts_per_100_patient_days": 4.52,
+            "n_alerts": 1459,
+            "true_positive_alerts": 276,
+            "auroc_95ci": [
+              0.6784,
+              0.7103
+            ],
+            "pr_auc_95ci": [
+              0.1349,
+              0.1724
+            ],
+            "n_boot": 200,
+            "resampling_unit": "patient"
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 32262,
+            "n_positive": 1341,
+            "prevalence": 0.0416,
+            "auroc": 0.5,
+            "pr_auc": 0.0416,
+            "precision": 0.0416,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 32262,
+            "true_positive_alerts": 1341
+          },
+          "persistence_today_feeling": {
+            "n_patient_days": 15680,
+            "n_positive": 511,
+            "prevalence": 0.0326,
+            "auroc": 0.7469,
+            "pr_auc": 0.0743,
+            "precision": null,
+            "recall": 0.0,
+            "alerts_per_100_patient_days": 0.0,
+            "n_alerts": 0,
+            "true_positive_alerts": 0,
+            "population_note": "evaluated only on rows where today's feeling was reported"
+          }
+        }
+      }
+    }
+  }
+}
