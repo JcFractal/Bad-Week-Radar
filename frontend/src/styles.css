@@ -112,3 +112,7 @@ th { font-size: 12px; color: var(--muted); font-weight: 600; background: #fafbfc
 .limits li { margin-bottom: 6px; } .log { font-size: 13px; padding-left: 18px; }
 @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .roster-row { grid-template-columns: minmax(0, 1fr) 140px; } .roster-plan, .roster-date { display: none; } }
 @media (max-width: 760px) { .sidebar { display: none; } .meta { grid-template-columns: 1fr; } .page-head { flex-direction: column; } .search { width: 100%; } }
+
+.outcome { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.outcome h2 { margin: 0; }
+.outcome p { margin: 0; }

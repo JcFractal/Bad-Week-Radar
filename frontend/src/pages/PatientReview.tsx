@@ -114,6 +114,19 @@ function Review({ patient, datasetId }: { patient: Patient; datasetId: string })
         </div>
       </section>
 
+      <section className="card outcome" aria-live="polite">
+        <h2>Next-day outcome</h2>
+        {!current ? <p className="muted">No prediction for this date.</p> : !revealed ? (
+          <p className="muted">The check-in for {fmtDate(current.target_date)} is hidden. Use “Reveal following days” to compare.</p>
+        ) : !targetDay ? <p>{fmtDate(current.target_date)} is not in this file.</p> : (
+          <p>
+            {typeof targetDay.daily_feeling_1_to_5 !== 'number' ? <>No feeling response on {fmtDate(current.target_date)}: the outcome is unknown (not counted as negative).</> :
+              targetDay.daily_feeling_1_to_5 <= 2 ? <>Feeling <b>{targetDay.daily_feeling_1_to_5}/5</b> on {fmtDate(current.target_date)}: a low day (2 or lower).</> :
+                <>Feeling <b>{targetDay.daily_feeling_1_to_5}/5</b> on {fmtDate(current.target_date)}: not a low day.</>}
+          </p>
+        )}
+      </section>
+
       <div className="grid">
         <section className="card charts">
           <h2>Wearable trends through {revealed ? 'the revealed days' : 'the As-of day'}</h2>
@@ -154,18 +167,6 @@ function Review({ patient, datasetId }: { patient: Patient; datasetId: string })
             )}
           </section>
 
-          <section className="card">
-            <h2>Next-day outcome</h2>
-            {!current ? <p className="muted">No prediction for this date.</p> : !revealed ? (
-              <p className="muted">The check-in for {fmtDate(current.target_date)} is hidden. Use “Reveal following days” to compare.</p>
-            ) : !targetDay ? <p>{fmtDate(current.target_date)} is not in this file.</p> : (
-              <p>
-                {typeof targetDay.daily_feeling_1_to_5 !== 'number' ? <>No feeling response on {fmtDate(current.target_date)}: the outcome is unknown (not counted as negative).</> :
-                  targetDay.daily_feeling_1_to_5 <= 2 ? <>Feeling <b>{targetDay.daily_feeling_1_to_5}/5</b> on {fmtDate(current.target_date)}: a low day (2 or lower).</> :
-                    <>Feeling <b>{targetDay.daily_feeling_1_to_5}/5</b> on {fmtDate(current.target_date)}: not a low day.</>}
-              </p>
-            )}
-          </section>
 
           <section className="card">
             <h2>Session notes</h2>
