@@ -4,6 +4,7 @@ Usage: python analysis/export.py [--patient-ids P00033 P00041] [--n 5] [--as-of 
 """
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -24,6 +25,17 @@ def patient_days_frame(patient):
     d = pd.DataFrame(patient["days"])
     d["patient_id"] = patient["patient_id"]
     return d
+
+
+def _json_safe(x):
+    """Replace NaN/inf (which pandas introduces for None) with null so the output is strict JSON."""
+    if isinstance(x, dict):
+        return {k: _json_safe(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_json_safe(v) for v in x]
+    if isinstance(x, float) and not math.isfinite(x):
+        return None
+    return x
 
 
 def export(source, bundle, patient_ids=None, n=5, as_of=None, include_days=True):
@@ -75,7 +87,7 @@ def main():
     source = json.loads(Path(args.patients_json).read_text())
     result = export(source, joblib.load(args.model), args.patient_ids, args.n, args.as_of, not args.no_days)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(result, indent=1, default=str))
+    out.write_text(json.dumps(_json_safe(result), indent=1, default=str, allow_nan=False))
     print(f"wrote {len(result['patients'])} patients -> {out}")
     for p in result["patients"]:
         a = p["analysis"]["latest"]
