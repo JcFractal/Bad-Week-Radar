@@ -47,6 +47,7 @@ def evaluate(df, bundle):
         pops = {
             "all_eligible": e,
             "shared_with_persistence": e[e.today_feeling.notna()],
+            "today_feeling_missing": e[e.today_feeling.isna()],
             "new_onset": e[e.new_onset_eligible],
         }
         res = {}
@@ -60,7 +61,7 @@ def evaluate(df, bundle):
                 r["wearable_logistic_regression"].update(
                     patient_bootstrap_ci(yy, p.score.values, p.patient_id.values))
             pp = p[p.today_feeling.notna()]
-            if len(pp):
+            if len(pp) and name != "today_feeling_missing":
                 r["persistence_today_feeling"] = metrics(
                     pp.target.values, -pp.today_feeling.values, pp.today_feeling.values <= LOW_FEELING_MAX)
                 r["persistence_today_feeling"]["population_note"] = (

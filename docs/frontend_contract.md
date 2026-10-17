@@ -80,13 +80,42 @@ All example values below are illustrative.
   `data_coverage.signals_missing_today`. They are never presented as reassuring or as a change.
 - `skin_temp_change_c` is missing for every Fitbit tracker (non-smartwatch) patient.
 
+## Replay / "As-of" mode (required)
+The demo export holds each patient's **whole** history, including days after any date the user may pick. To
+replay honestly:
+
+1. **Use only the record dated on the As-of date.** For a selected As-of date `D`, show
+   `analysis.daily.find(r => r.prediction_date === D)`. That record was computed from data up to and including
+   `D` only, and it predicts `target_date = D + 1`.
+2. **Never show `analysis.latest` in replay.** `latest` is the record for the patient's last day in the file,
+   which is usually later than `D`, so it would leak the future. Use it only in a "live" view.
+3. **If no record exists for `D`** (a date outside the patient's range), show "no analysis for this date". Don't
+   fall back to the nearest later record. Falling back to the nearest *earlier* record is acceptable only if its
+   `prediction_date` is labeled clearly.
+4. **Hide future observations.** Filter charts, tables and summaries to `days.filter(d => d.date <= D)` and
+   `analysis.daily.filter(r => r.prediction_date <= D)`. Don't show day `D + 1` (including its
+   `daily_feeling_1_to_5`, events or diary notes) or any later day, and don't compute axis ranges or summary
+   stats from hidden days.
+5. **"Reveal following days" is an explicit user action.** Only after the user selects it may the UI show days
+   `> D`, for example to show whether the alert for `D + 1` came true. Label revealed days visually as "after the
+   prediction".
+
+```js
+const visibleDays    = patient.days.filter(d => d.date <= asOf || revealed);
+const visibleRecords = patient.analysis.daily.filter(r => r.prediction_date <= asOf || revealed);
+const current        = patient.analysis.daily.find(r => r.prediction_date === asOf) ?? null; // never analysis.latest
+```
+
+To get a file that physically contains no later data, run `python analysis/export.py --as-of D`. It drops every
+day after `D` before scoring, so `latest` is then the As-of record.
+
 ## Evidence page
 The Evidence page should read `analysis/results/synthetic_next_day_low_feeling.json` (aggregate only, committed).
 Key paths:
 - `dataset` and `task` describe the setup.
 - `split.summary.{train,val,test}` holds counts and prevalence.
 - `model.threshold` and `model.top_standardized_coefficients` describe the model.
-- `results.test.{all_eligible, shared_with_persistence, new_onset}.models.{wearable_logistic_regression,
+- `results.test.{all_eligible, shared_with_persistence, today_feeling_missing, new_onset}.models.{wearable_logistic_regression,
   constant_baseline_alert_all, persistence_today_feeling}` contains these metrics: `n_patient_days`,
   `n_positive`, `prevalence`, `auroc`, `pr_auc`, `precision`, `recall`, `alerts_per_100_patient_days`, and (LR on
   test) `auroc_95ci` / `pr_auc_95ci`.

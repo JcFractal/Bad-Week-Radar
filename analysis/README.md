@@ -24,6 +24,7 @@ python analysis/train_eval.py      # ~1.5 min: features, patient split, training
                                    # -> analysis/results/synthetic_next_day_low_feeling.json (aggregate, committed)
 python analysis/export.py          # demo export of 5 held-out test patients -> ~/bwr_outputs/demo_export.json
 python analysis/export.py --patient-ids P00044 P00065 --as-of 2024-03-15 --no-days --out ~/bwr_outputs/x.json
+python analysis/evaluate_frozen.py   # re-score saved model at saved threshold (no retraining); adds populations to results JSON
 python -m pytest analysis/tests -q # leakage, separation and privacy checks
 python analysis/fatigue_experiment.py  # secondary, real NON-oncology data -> analysis/results/fatigue_next_day_bad_day.json
 ```

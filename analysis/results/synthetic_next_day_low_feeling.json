@@ -211,6 +211,35 @@
           }
         }
       },
+      "today_feeling_missing": {
+        "n_patients": 575,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 19564,
+            "n_positive": 1794,
+            "prevalence": 0.0917,
+            "auroc": 0.7857,
+            "pr_auc": 0.436,
+            "precision": 0.4376,
+            "recall": 0.4259,
+            "alerts_per_100_patient_days": 8.92,
+            "n_alerts": 1746,
+            "true_positive_alerts": 764
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 19564,
+            "n_positive": 1794,
+            "prevalence": 0.0917,
+            "auroc": 0.5,
+            "pr_auc": 0.0917,
+            "precision": 0.0917,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 19564,
+            "true_positive_alerts": 1794
+          }
+        }
+      },
       "new_onset": {
         "n_patients": 575,
         "models": {
@@ -359,6 +388,45 @@
           }
         }
       },
+      "today_feeling_missing": {
+        "n_patients": 610,
+        "models": {
+          "wearable_logistic_regression": {
+            "n_patient_days": 20509,
+            "n_positive": 1849,
+            "prevalence": 0.0902,
+            "auroc": 0.7871,
+            "pr_auc": 0.4228,
+            "precision": 0.4243,
+            "recall": 0.417,
+            "alerts_per_100_patient_days": 8.86,
+            "n_alerts": 1817,
+            "true_positive_alerts": 771,
+            "auroc_95ci": [
+              0.772,
+              0.8011
+            ],
+            "pr_auc_95ci": [
+              0.3894,
+              0.4478
+            ],
+            "n_boot": 200,
+            "resampling_unit": "patient"
+          },
+          "constant_baseline_alert_all": {
+            "n_patient_days": 20509,
+            "n_positive": 1849,
+            "prevalence": 0.0902,
+            "auroc": 0.5,
+            "pr_auc": 0.0902,
+            "precision": 0.0902,
+            "recall": 1.0,
+            "alerts_per_100_patient_days": 100.0,
+            "n_alerts": 20509,
+            "true_positive_alerts": 1849
+          }
+        }
+      },
       "new_onset": {
         "n_patients": 610,
         "models": {
@@ -412,5 +480,9 @@
         }
       }
     }
+  },
+  "frozen_reevaluation": {
+    "model_trained_at": "2026-10-17T18:32:46+00:00",
+    "note": "today_feeling_missing added by re-scoring the saved model at the saved validation threshold; no retraining or threshold change"
   }
 }
